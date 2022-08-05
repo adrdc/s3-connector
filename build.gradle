@@ -48,91 +48,78 @@ configurations {
 }
 
 dependencies {
-    compile "org.glassfish.hk2.external:jakarta.inject:${glassfishJakartaInjectVersion}"
-    compile "org.glassfish.hk2.external:javax.inject:${glassfishJavaxInjectVersion}"
-    compile "jakarta.validation:jakarta.validation-api:${jakartaValidationVersion}"
-    compile "com.facebook.airlift:bootstrap:${airliftVersion}"
-    compile "javax.inject:javax.inject:${javaxInjectVersion}"
-    compile "com.facebook.airlift:log:${airliftVersion}"
-    compile "com.facebook.airlift:concurrent:${airliftVersion}"
-    compile "com.facebook.airlift:configuration:${airliftVersion}"
-    compile "javax.validation:validation-api:${javaxValidationVersion}"
-    compile "com.google.guava:guava:${guavaVersion}"
-    compile "com.google.inject:guice:${guiceVersion}"
+    compile "io.trino:trino-client:${trinoVersion}"
+    compile "io.trino:trino-main:${trinoVersion}"
+    compile "io.trino:trino-plugin-toolkit:${trinoVersion}"
+    compile "io.trino:trino-record-decoder:${trinoVersion}"
+    compile "io.trino:trino-server-dev:${trinoVersion}"
+    compile "io.trino:trino-server-main:${trinoVersion}"
+    compile "io.trino:trino-parquet:${trinoVersion}"
+    compile "io.trino:trino-hive:${trinoVersion}"
+    compile "io.trino:trino-hive-hadoop2:${trinoVersion}"
+    compile "io.trino:trino-spi:${trinoVersion}"
+
+    compile "io.airlift:bootstrap:${airliftVersion}"
+    compile "io.airlift:configuration:${airliftVersion}"
+    compile "io.airlift:json:${airliftVersion}"
+    compile "io.airlift:log:${airliftVersion}"
+    compile 'io.airlift:units:1.6'
+
+    compile 'com.fasterxml.jackson.core:jackson-core:2.12.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.12.2'
+    compile 'com.github.erosb:everit-json-schema:1.12.1'
+    compile 'com.google.guava:guava:30.1.1-jre'
+    compile 'com.google.inject:guice:5.0.1'
+    compile 'com.google.protobuf:protobuf-java:3.12.0'
+    compile 'com.linkedin.calcite:calcite-core:1.21.0.146'
+
     compile "com.amazonaws:aws-java-sdk-s3:${awsSDKVersion}"
     compile "com.amazonaws:aws-java-sdk-core:${awsSDKVersion}"
-    compile "javax.ws.rs:javax.ws.rs-api:${javaxWSRSVersion}"
-    compile "org.apache.avro:avro:${avroVersion}"
+
+    compile 'javax.inject:javax.inject:1'
+    compile 'javax.validation:validation-api:2.0.1.Final'
+    compile 'org.apache.avro:avro:1.9.2'
+    compile 'io.airlift:slice:0.39'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.12.2'
+    compile 'org.openjdk.jol:jol-core:0.2'
     compile "com.opencsv:opencsv:${openCSVVer}"
-    compile "net.sf.opencsv:opencsv:${netOpenCSVVer}"
-    compile "com.facebook.presto:presto-spi:${prestoVersion}"
 
-    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
-    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
-    compile "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jacksonVersion}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jacksonVersion}"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
-    compile "com.fasterxml.jackson:jackson-bom:${jacksonVersion}"
-    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:${jacksonVersion}"
-    compile "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"
-    compile "com.fasterxml.jackson.module:jackson-module-afterburner:${jacksonVersion}"
-    compile "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
-    compile "com.fasterxml.jackson.module:jackson-module-jsonSchema:${jacksonVersion}"
-
-    compile "io.airlift:slice:${airliftSliceVersion}"
-    compile "io.airlift:units:${airliftUnitsVersion}"
-    compile "org.json:json:${jsonVersion}"
-    compile "joda-time:joda-time:${jodaTimeVersion}"
-    compile "com.facebook.presto:presto-common:${prestoVersion}"
-    compile "com.facebook.presto:presto-record-decoder:${prestoVersion}"
-    compile "com.emc.ecs:object-client:${emcObjectClientVersion}"
-    compile "io.pravega:schemaregistry-client:${pravegaSchemaRegistryVersion}"
-    compile "io.pravega:schemaregistry-contract:${pravegaSchemaRegistryVersion}"
     compile "org.apache.parquet:parquet-hadoop:${apacheParquetVersion}"
     compile "org.apache.parquet:parquet-column:${apacheParquetVersion}"
-    compile "org.weakref:jmxutils:${jmxVersion}"
-    compile "com.facebook.presto:presto-parquet:${prestoVersion}"
-    compile "com.facebook.presto:presto-memory-context:${prestoVersion}"
-    compile "com.facebook.presto.hive:hive-apache:${prestoHiveVersion}"
-    compile "com.facebook.presto.hadoop:hadoop-apache2:${prestoHadoopVersion}"
-    compile "jakarta.ws.rs:jakarta.ws.rs-api:${jakartaRSVersion}"
-    compile "com.facebook.presto:presto-main:${prestoVersion}"
 
-    compile "com.sun.xml.bind:jaxb-core:${javaxXMLBindVersion}"
-    compile "com.sun.xml.bind:jaxb-impl:${javaxXMLBindVersion}"
-    compile "javax.xml.bind:jaxb-api:${javaxXMLBindVersion}"
-    compile "io.airlift:joda-to-java-time-bridge:${airliftJodaVersion}"
-    compile "org.slf4j:slf4j-simple:${slf4Version}"
-    compile "com.emc.ecs:smart-client:${emcSmartClientVersion}"
-    compile "com.emc.ecs:object-transform:${emcObjectTransformVersion}"
-    compile "org.jdom:jdom2:${JDOMVersion}"
-    compile "org.glassfish.jersey.containers:jersey-container-servlet-core:${glassfishJerseyVersion}"
-    compile "org.glassfish.jersey.core:jersey-common:${glassfishJerseyVersion}"
-    compile "org.glassfish.jersey.ext:jersey-proxy-client:${glassfishJerseyVersion}"
-    compile "org.glassfish.jersey.core:jersey-client:${glassfishJerseyVersion}"
-    compile "org.glassfish.jersey.inject:jersey-hk2:${glassfishJerseyVersion}"
+    runtimeOnly "io.airlift:log-manager:${airliftVersion}"
+    runtimeOnly 'com.emc.ecs:object-transform:1.1.0'
+    runtimeOnly 'com.emc.ecs:smart-client:2.2.1'
+    runtimeOnly 'org.glassfish.jersey.core:jersey-server:2.30'
+    runtimeOnly 'org.javassist:javassist:3.25.0-GA'
+    runtimeOnly 'org.jetbrains:annotations:19.0.0'
+    runtimeOnly 'org.yaml:snakeyaml:1.27'
+
     compile "io.pravega:schemaregistry-common:${pravegaSchemaRegistryVersion}"
     compile "io.pravega:pravega-common:${pravegaVersion}"
-    compile "org.apache.bval:bval-jsr:${apacheBvalJSRVersion}"
-
-    testImplementation "com.facebook.airlift:log-manager:${airliftVersion}"
-    testImplementation "com.facebook.presto:presto-tests:${prestoVersion}"
-    testImplementation "org.testng:testng:${testNGVersion}"
-    testImplementation "com.facebook.airlift:testing:${airliftVersion}"
+    compile "io.pravega:schemaregistry-client:${pravegaSchemaRegistryVersion}"
+    compile "io.pravega:schemaregistry-contract:${pravegaSchemaRegistryVersion}"
     testImplementation "io.pravega:schemaregistry-server:${pravegaSchemaRegistryVersion}"
-    testImplementation 'org.apache.httpcomponents:httpcore:4.4.14'
+
+    testImplementation "io.trino:trino-memory:${trinoVersion}"
+    testImplementation "io.trino:trino-benchmark:${trinoVersion}"
+    testImplementation "io.trino:trino-spi:${trinoVersion}"
+    testImplementation "io.trino:trino-testing:${trinoVersion}"
+    testImplementation "io.trino:trino-testing-services:${trinoVersion}"
+    testImplementation "io.trino:trino-tpch:${trinoVersion}"
+
+    testImplementation "io.airlift:testing:${airliftVersion}"
+    testImplementation 'io.pravega:pravega-standalone:0.9.0'
+    testImplementation 'org.assertj:assertj-core:3.18.1'
+    testImplementation 'org.openjdk.jmh:jmh-core:1.20'
+    testImplementation 'org.openjdk.jmh:jmh-generator-annprocess:1.20'
+    testImplementation 'org.testng:testng:6.10'
 }
 
-group = 'com.facebook.presto'
-version = '0.1.0'
-description = 'S3 PrestoDB Connector'
-sourceCompatibility = '1.8'
+group = 'io.trino'
+version = '359'
+sourceCompatibility = '11'
+targetCompatibility = '11'
 
 compileJava {
 options.debug = true
@@ -164,7 +151,7 @@ plugins.withType(DistributionPlugin) {
 distributions {
     main {
         contents {
-            distributionBaseName = 's3-presto-connector'
+            distributionBaseName = 's3-prestopresto-connector'
             from(project.configurations.runtime)
             from jar
         }
