@@ -16,27 +16,27 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.spi.ColumnHandle;
-import com.facebook.presto.spi.ColumnMetadata;
-import com.facebook.presto.spi.ConnectorInsertTableHandle;
-import com.facebook.presto.spi.ConnectorNewTableLayout;
-import com.facebook.presto.spi.ConnectorOutputTableHandle;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorTableHandle;
-import com.facebook.presto.spi.ConnectorTableLayout;
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
-import com.facebook.presto.spi.ConnectorTableLayoutResult;
-import com.facebook.presto.spi.ConnectorTableMetadata;
-import com.facebook.presto.spi.Constraint;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.SchemaTablePrefix;
-import com.facebook.presto.spi.TableNotFoundException;
-import com.facebook.presto.spi.connector.ConnectorMetadata;
-import com.facebook.presto.spi.connector.ConnectorOutputMetadata;
-import com.facebook.presto.spi.statistics.ComputedStatistics;
+import io.airlift.log.Logger;
+import io.trino.spi.type.Type;
+import io.trino.spi.connector.ColumnHandle;
+import io.trino.spi.connector.ColumnMetadata;
+import io.trino.spi.connector.ConnectorInsertTableHandle;
+import io.trino.spi.connector.ConnectorNewTableLayout;
+import io.trino.spi.connector.ConnectorOutputTableHandle;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.ConnectorTableHandle;
+import io.trino.spi.connector.ConnectorTableLayout;
+import io.trino.spi.connector.ConnectorTableLayoutHandle;
+import io.trino.spi.connector.ConnectorTableLayoutResult;
+import io.trino.spi.connector.ConnectorTableMetadata;
+import io.trino.spi.connector.Constraint;
+import io.trino.spi.TrinoException;
+import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.connector.SchemaTablePrefix;
+import io.trino.spi.connector.TableNotFoundException;
+import io.trino.spi.connector.ConnectorMetadata;
+import io.trino.spi.connector.ConnectorOutputMetadata;
+import io.trino.spi.statistics.ComputedStatistics;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -54,9 +54,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.s3.S3Const.*;
+import static io.trino.spi.StandardErrorCode.NOT_SUPPORTED;
 import static java.lang.String.format;
 import static com.facebook.presto.s3.Types.checkType;
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
 
@@ -134,7 +134,7 @@ public class S3Metadata
         if (table == null) {
             return null;
         } else if (table.getColumns().isEmpty() && tableName.getSchemaName().equals("s3_buckets")) {
-            throw new PrestoException(NOT_SUPPORTED, "MetaData Search is not Enabled for this Bucket");
+            throw new TrinoException(NOT_SUPPORTED, "MetaData Search is not Enabled for this Bucket");
         } else {
             return new ConnectorTableMetadata(tableName, table.getColumnsMetadata());
         }
@@ -155,7 +155,7 @@ public class S3Metadata
     @Override
     public void createSchema(ConnectorSession session, String schemaName, Map<String, Object> properties) {
         if (schemaRegistryManager.schemaExists(schemaName)) {
-            throw new PrestoException(S3ErrorCode.S3_SCHEMA_ALREADY_EXISTS, format("Schema %s already exists", schemaName));
+            throw new TrinoException(S3ErrorCode.S3_SCHEMA_ALREADY_EXISTS, format("Schema %s already exists", schemaName));
         }
         schemaRegistryManager.createGroup(schemaName, session.getUser());
         this.tableDescriptions = s3TableDescriptionSupplier.get();
@@ -177,7 +177,7 @@ public class S3Metadata
     @Override
     public void createTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, boolean ignoreExisting) {
         if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
-            throw new PrestoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS,
+            throw new TrinoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS,
                     format("Table %s in schema %s already exists", tableMetadata.getTable().getTableName(), tableMetadata.getTable().getSchemaName()));
         }
         schemaRegistryManager.createTable(tableMetadata);
@@ -187,7 +187,7 @@ public class S3Metadata
     @Override
     public S3OutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, Optional<ConnectorNewTableLayout> layout) {
         if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
-            throw new PrestoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS, format("Table %s in schema %s already exists",
+            throw new TrinoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS, format("Table %s in schema %s already exists",
                     tableMetadata.getTable().getTableName(), tableMetadata.getTable().getSchemaName()));
         }
 

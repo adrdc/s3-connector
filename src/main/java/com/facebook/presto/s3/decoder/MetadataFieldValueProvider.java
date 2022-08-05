@@ -15,7 +15,7 @@
  */
 package com.facebook.presto.s3.decoder;
 
-import com.facebook.presto.decoder.FieldValueProvider;
+import io.trino.decoder.FieldValueProvider;
 import com.facebook.presto.s3.S3ColumnHandle;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;

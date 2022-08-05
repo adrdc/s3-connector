@@ -16,7 +16,7 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.ConnectorSession;
+import io.trino.spi.connector.ConnectorSession;
 import io.airlift.units.DataSize;
 
 import java.util.ArrayList;
@@ -137,6 +137,7 @@ public class S3Const {
     }
 
     public static DataSize getParquetMaxReadBlockSize(ConnectorSession session) {
-        return session.getProperty(PARQUET_MAX_READ_BLOCK_SIZE, DataSize.class);
+        long bytes = session.getProperty(PARQUET_MAX_READ_BLOCK_SIZE, Long.class);
+        return DataSize.ofBytes(bytes);
     }
 }

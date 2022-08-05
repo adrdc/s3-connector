@@ -17,18 +17,18 @@
  */
 package com.facebook.presto.s3.decoder;
 
-import com.facebook.presto.decoder.DecoderColumnHandle;
-import com.facebook.presto.decoder.RowDecoder;
-import com.facebook.presto.decoder.RowDecoderFactory;
-import com.facebook.presto.decoder.json.CustomDateTimeJsonFieldDecoder;
-import com.facebook.presto.decoder.json.DefaultJsonFieldDecoder;
-import com.facebook.presto.decoder.json.ISO8601JsonFieldDecoder;
-import com.facebook.presto.decoder.json.JsonFieldDecoder;
-import com.facebook.presto.decoder.json.MillisecondsSinceEpochJsonFieldDecoder;
-import com.facebook.presto.decoder.json.RFC2822JsonFieldDecoder;
-import com.facebook.presto.decoder.json.SecondsSinceEpochJsonFieldDecoder;
-import com.facebook.presto.spi.PrestoException;
+import io.trino.decoder.DecoderColumnHandle;
+import io.trino.decoder.RowDecoder;
+import io.trino.decoder.RowDecoderFactory;
+import io.trino.decoder.json.CustomDateTimeJsonFieldDecoder;
+import io.trino.decoder.json.DefaultJsonFieldDecoder;
+import io.trino.decoder.json.ISO8601JsonFieldDecoder;
+import io.trino.decoder.json.JsonFieldDecoder;
+import io.trino.decoder.json.MillisecondsSinceEpochJsonFieldDecoder;
+import io.trino.decoder.json.RFC2822JsonFieldDecoder;
+import io.trino.decoder.json.SecondsSinceEpochJsonFieldDecoder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.trino.spi.TrinoException;
 
 import javax.inject.Inject;
 
@@ -36,9 +36,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.facebook.presto.spi.StandardErrorCode.GENERIC_USER_ERROR;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static io.trino.spi.StandardErrorCode.GENERIC_USER_ERROR;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
@@ -86,7 +86,7 @@ public class JsonRowDecoderFactory
                     throw new IllegalArgumentException(format("unknown data format '%s' used for column '%s'", column.getDataFormat(), column.getName()));
             }
         } catch (IllegalArgumentException e) {
-            throw new PrestoException(GENERIC_USER_ERROR, e);
+            throw new TrinoException(GENERIC_USER_ERROR, e);
         }
     }
 

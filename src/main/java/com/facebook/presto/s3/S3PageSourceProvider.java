@@ -16,24 +16,15 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.predicate.TupleDomain;
-import com.facebook.presto.common.type.TypeManager;
-import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
-import com.facebook.presto.decoder.RowDecoder;
-import com.facebook.presto.spi.ColumnHandle;
-import com.facebook.presto.spi.ConnectorPageSource;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
-import com.facebook.presto.spi.RecordPageSource;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.SplitContext;
-import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.airlift.log.Logger;
+import io.trino.decoder.DispatchingRowDecoderFactory;
+import io.trino.decoder.RowDecoder;
+import io.trino.spi.connector.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.trino.spi.predicate.TupleDomain;
+import io.trino.spi.type.TypeManager;
 
 import java.util.HashSet;
 import java.util.List;
@@ -79,16 +70,16 @@ public class S3PageSourceProvider
             ConnectorTransactionHandle transaction,
             ConnectorSession session,
             ConnectorSplit split,
-            ConnectorTableLayoutHandle layout,
+            ConnectorTableHandle handle,
             List<ColumnHandle> columns,
-            SplitContext splitContext) {
+            DynamicFilter dynamicFilter) {
 
         S3Split s3Split = convertSplit(split);
         S3TableHandle s3TableHandle = s3Split.getS3TableHandle();
         if (!s3TableHandle.getObjectDataFormat().equalsIgnoreCase(PARQUET)) {
             return notParquetPageSourceHelper(columns, s3Split, s3TableHandle, session);
         } else {
-            return parquetPageSourceHelper(columns, s3Split, s3TableHandle, session, splitContext);
+            return parquetPageSourceHelper(columns, s3Split, s3TableHandle, session, dynamicFilter);
         }
     }
 
@@ -120,7 +111,7 @@ public class S3PageSourceProvider
         return new RecordPageSource(new S3RecordSet(session, s3Split, s3Columns, accessObject, objectDecoder, s3TableHandle));
     }
 
-    private ConnectorPageSource parquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session, SplitContext splitContext) {
+    private ConnectorPageSource parquetPageSourceHelper(List<ColumnHandle> columns, S3Split s3Split, S3TableHandle s3TableHandle, ConnectorSession session, DynamicFilter dynamicFilter) {
         S3ObjectRange obj = S3ObjectRange.deserialize(s3Split.getObjectRange());
         long start = obj.getOffset();
         int length = obj.getLength();
@@ -141,7 +132,7 @@ public class S3PageSourceProvider
                 start,
                 length,
                 selectedColumns,
-                splitContext.getDynamicFilterPredicate().map(filter -> filter.transform(handle -> (S3ColumnHandle) handle).intersect(effectivePredicate)).orElse(effectivePredicate),
+                dynamicFilter.getCurrentPredicate().transformKeys(handle -> (S3ColumnHandle) handle).intersect(effectivePredicate),
                 typeManager,
                 s3TableHandle.toSchemaTableName(),
                 s3Split.getS3SelectPushdownEnabled());

@@ -15,11 +15,11 @@
  */
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.concurrent.MoreFutures;
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.ConnectorSplitSource;
-import com.facebook.presto.spi.connector.ConnectorPartitionHandle;
+import io.airlift.concurrent.MoreFutures;
+import io.airlift.log.Logger;
+import io.trino.spi.connector.ConnectorSplit;
+import io.trino.spi.connector.ConnectorSplitSource;
+import io.trino.spi.connector.ConnectorPartitionHandle;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;

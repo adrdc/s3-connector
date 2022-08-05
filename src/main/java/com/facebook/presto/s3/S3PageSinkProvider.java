@@ -16,15 +16,14 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.ConnectorInsertTableHandle;
-import com.facebook.presto.spi.ConnectorOutputTableHandle;
-import com.facebook.presto.spi.ConnectorPageSink;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.PageSinkContext;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.connector.ConnectorPageSinkProvider;
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.airlift.log.Logger;
+import io.trino.spi.TrinoException;
+import io.trino.spi.connector.ConnectorInsertTableHandle;
+import io.trino.spi.connector.ConnectorOutputTableHandle;
+import io.trino.spi.connector.ConnectorPageSink;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.ConnectorPageSinkProvider;
+import io.trino.spi.connector.ConnectorTransactionHandle;
 
 import javax.inject.Inject;
 
@@ -33,8 +32,8 @@ import java.net.URISyntaxException;
 import java.util.Map;
 
 import static com.facebook.presto.s3.S3Const.*;
-import static com.facebook.presto.spi.StandardErrorCode.CONFIGURATION_INVALID;
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.trino.spi.StandardErrorCode.CONFIGURATION_INVALID;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -50,7 +49,7 @@ public class S3PageSinkProvider
     }
 
     @Override
-    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorOutputTableHandle tableHandle, PageSinkContext pageSinkProperties) {
+    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorOutputTableHandle tableHandle) {
         requireNonNull(tableHandle, "tableHandle is null");
         checkArgument(tableHandle instanceof S3OutputTableHandle, "tableHandle is not an instance of S3OutputTableHandle");
         S3OutputTableHandle handle = (S3OutputTableHandle) tableHandle;
@@ -72,14 +71,14 @@ public class S3PageSinkProvider
                     bucket = new URI(location).getHost();
                 } catch (URISyntaxException e) {
                     log.error("Incorrect location format: " + location);
-                    throw new PrestoException(CONFIGURATION_INVALID,
+                    throw new TrinoException(CONFIGURATION_INVALID,
                             format("Error processing schema string: %s", location));
                 }
                 log.debug("Table location. Bucket: " + bucket + ", prefix: " + prefix);
             } else if (property.getKey().equalsIgnoreCase(OBJECT_FILE_TYPE_DEF)) {
                 file_format = (String) property.getValue();
                 if (!S3Const.isValidFormatForInsert(file_format)) {
-                    throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
+                    throw new TrinoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
                             format("Unsupported table format for insert: %s", (String) property.getValue()));
                 }
             } else if (property.getKey().equalsIgnoreCase(HAS_HEADER_ROW_DEF)) {
@@ -110,7 +109,7 @@ public class S3PageSinkProvider
     }
 
     @Override
-    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorInsertTableHandle tableHandle, PageSinkContext pageSinkProperties) {
+    public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorInsertTableHandle tableHandle) {
         requireNonNull(tableHandle, "tableHandle is null");
         checkArgument(tableHandle instanceof S3InsertTableHandle, "tableHandle is not an instance of ConnectorInsertTableHandle");
         S3InsertTableHandle handle = (S3InsertTableHandle) tableHandle;

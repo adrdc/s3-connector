@@ -19,15 +19,15 @@
  */
 package com.facebook.presto.s3.decoder;
 
-import com.facebook.presto.decoder.FieldValueProvider;
+import io.trino.decoder.FieldValueProvider;
 import com.facebook.presto.s3.S3ColumnHandle;
 
 import java.time.temporal.TemporalAccessor;
 import java.util.concurrent.TimeUnit;
 
-import static com.facebook.presto.common.type.DateType.DATE;
-import static com.facebook.presto.common.type.TimeType.TIME;
-import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
+import static io.trino.spi.type.DateType.DATE;
+import static io.trino.spi.type.TimeType.TIME;
+import static io.trino.spi.type.TimestampType.TIMESTAMP;
 import static java.time.format.DateTimeFormatter.*;
 import static java.time.temporal.ChronoField.EPOCH_DAY;
 import static java.time.temporal.ChronoField.MILLI_OF_DAY;

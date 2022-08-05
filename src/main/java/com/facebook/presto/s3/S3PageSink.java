@@ -16,16 +16,15 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.common.Page;
-import com.facebook.presto.common.block.Block;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.spi.ConnectorPageSink;
-import com.facebook.presto.spi.PrestoException;
+import com.opencsv.CSVWriter;
+import io.airlift.log.Logger;
+import io.trino.spi.Page;
+import io.trino.spi.TrinoException;
+import io.trino.spi.block.Block;
+import io.trino.spi.connector.ConnectorPageSink;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.opencsv.CSVWriter;
-import com.opencsv.ICSVWriter;
 import io.airlift.slice.Slice;
 
 import java.io.ByteArrayInputStream;
@@ -44,20 +43,20 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.facebook.airlift.log.Logger;
+import static com.opencsv.ICSVWriter.DEFAULT_QUOTE_CHARACTER;
+import static com.opencsv.ICSVWriter.NO_ESCAPE_CHARACTER;
+import static io.trino.spi.type.BigintType.BIGINT;
+import static io.trino.spi.type.BooleanType.BOOLEAN;
+import static io.trino.spi.type.DateType.DATE;
+import static io.trino.spi.type.IntegerType.INTEGER;
+import static io.trino.spi.type.DoubleType.DOUBLE;
+import static io.trino.spi.type.RealType.REAL;
+import static io.trino.spi.type.TimeType.TIME;
+import static io.trino.spi.type.TimestampType.TIMESTAMP;
+import static io.trino.spi.type.VarbinaryType.VARBINARY;
 
-import static com.facebook.presto.common.type.BigintType.BIGINT;
-import static com.facebook.presto.common.type.BooleanType.BOOLEAN;
-import static com.facebook.presto.common.type.DateType.DATE;
-import static com.facebook.presto.common.type.DoubleType.DOUBLE;
-import static com.facebook.presto.common.type.IntegerType.INTEGER;
-import static com.facebook.presto.common.type.RealType.REAL;
-import static com.facebook.presto.common.type.TimeType.TIME;
-import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
-import static com.facebook.presto.common.type.VarbinaryType.VARBINARY;
-import static com.facebook.presto.common.type.Varchars.isVarcharType;
-import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.trino.spi.StandardErrorCode.NOT_SUPPORTED;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.toIntExact;
 import static java.lang.String.format;
@@ -67,6 +66,8 @@ import static com.facebook.presto.s3.S3Const.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.trino.spi.type.Type;
+import io.trino.spi.type.VarcharType;
 
 public class S3PageSink
         implements ConnectorPageSink {
@@ -128,7 +129,7 @@ public class S3PageSink
         } else if (file_format.equalsIgnoreCase(JSON)) {
             return appendJsonPage(page, file_format);
         } else {
-            throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT, format("File format %s is not supported", file_format));
+            throw new TrinoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT, format("File format %s is not supported", file_format));
         }
     }
 
@@ -186,12 +187,12 @@ public class S3PageSink
             jsonMap.put(name, String.valueOf(new Time(type.getLong(block, position))));
         } else if (TIMESTAMP.equals(type)) {
             jsonMap.put(name, String.valueOf(new Timestamp(type.getLong(block, position))));
-        } else if (isVarcharType(type)) {
+        } else if (type instanceof VarcharType) {
             jsonMap.put(name, type.getSlice(block, position).toStringUtf8());
         } else if (VARBINARY.equals(type)) {
             jsonMap.put(name, String.valueOf(type.getSlice(block, position).toByteBuffer()));
         } else {
-            throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
+            throw new TrinoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
         }
     }
 
@@ -199,8 +200,8 @@ public class S3PageSink
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputStreamWriter osw = new OutputStreamWriter(baos);
         CSVWriter csvWriter = new CSVWriter(osw, field_delimiter.charAt(0),
-                ICSVWriter.DEFAULT_QUOTE_CHARACTER,
-                ICSVWriter.NO_ESCAPE_CHARACTER, record_delimiter);
+                DEFAULT_QUOTE_CHARACTER,
+                NO_ESCAPE_CHARACTER, record_delimiter);
 
         List<String[]> inputPage = new ArrayList<String[]>();
         if (has_header_row.equalsIgnoreCase(TRUE)) {
@@ -269,12 +270,12 @@ public class S3PageSink
             values.add(new Time(type.getLong(block, position)));
         } else if (TIMESTAMP.equals(type)) {
             values.add(new Timestamp(type.getLong(block, position)));
-        } else if (isVarcharType(type)) {
+        } else if (type instanceof VarcharType) {
             values.add(type.getSlice(block, position).toStringUtf8());
         } else if (VARBINARY.equals(type)) {
             values.add(type.getSlice(block, position).toByteBuffer());
         } else {
-            throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
+            throw new TrinoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
         }
     }
 

@@ -16,19 +16,19 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.common.Page;
-import com.facebook.presto.common.block.Block;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.common.type.TypeManager;
-import com.facebook.presto.spi.ConnectorPageSource;
+import io.trino.spi.Page;
+import io.trino.spi.TrinoException;
+import io.trino.spi.block.Block;
+import io.trino.spi.connector.ConnectorPageSource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.facebook.presto.spi.PrestoException;
 import com.google.common.annotations.VisibleForTesting;
+import io.trino.spi.type.Type;
+import io.trino.spi.type.TypeManager;
 
 import static com.facebook.presto.s3.S3ErrorCode.S3_CURSOR_ERROR;
 import static java.util.Objects.requireNonNull;
@@ -68,11 +68,6 @@ public class S3PageSource implements ConnectorPageSource {
     }
 
     @Override
-    public long getCompletedPositions() {
-        return delegate.getCompletedPositions();
-    }
-
-    @Override
     public long getReadTimeNanos() {
         return delegate.getReadTimeNanos();
     }
@@ -98,12 +93,12 @@ public class S3PageSource implements ConnectorPageSource {
                 blocks.add(block);
             }
             return new Page(batchSize, blocks.toArray(new Block[0]));
-        } catch (PrestoException e) {
+        } catch (TrinoException e) {
             closeWithSuppression(e);
             throw e;
         } catch (RuntimeException e) {
             closeWithSuppression(e);
-            throw new PrestoException(S3_CURSOR_ERROR, e);
+            throw new TrinoException(S3_CURSOR_ERROR, e);
         }
     }
 

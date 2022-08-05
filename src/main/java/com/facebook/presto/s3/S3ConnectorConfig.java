@@ -16,11 +16,11 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.configuration.Config;
-import com.facebook.airlift.configuration.ConfigSecuritySensitive;
-import com.facebook.presto.spi.HostAddress;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import io.airlift.configuration.Config;
+import io.airlift.configuration.ConfigSecuritySensitive;
+import io.trino.spi.HostAddress;
 
 import javax.validation.constraints.NotNull;
 

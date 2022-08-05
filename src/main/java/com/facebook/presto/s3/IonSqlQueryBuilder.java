@@ -18,33 +18,35 @@
  */
 package com.facebook.presto.s3;
 
-import com.facebook.presto.common.predicate.Domain;
-import com.facebook.presto.common.predicate.Range;
-import com.facebook.presto.common.predicate.TupleDomain;
-import com.facebook.presto.common.type.DecimalType;
-import com.facebook.presto.common.type.Decimals;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.common.type.VarcharType;
-import com.facebook.presto.spi.ColumnHandle;
 import com.google.common.base.Joiner;
 import io.airlift.slice.Slice;
+import io.trino.spi.connector.ColumnHandle;
+import io.trino.spi.predicate.Domain;
+import io.trino.spi.predicate.Range;
+import io.trino.spi.predicate.TupleDomain;
+import io.trino.spi.type.DecimalType;
+import io.trino.spi.type.Decimals;
+import io.trino.spi.type.Type;
+import io.trino.spi.type.VarcharType;
 import org.joda.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.facebook.presto.common.type.BigintType.BIGINT;
-import static com.facebook.presto.common.type.BooleanType.BOOLEAN;
-import static com.facebook.presto.common.type.DateType.DATE;
-import static com.facebook.presto.common.type.IntegerType.INTEGER;
-import static com.facebook.presto.common.type.SmallintType.SMALLINT;
-import static com.facebook.presto.common.type.TinyintType.TINYINT;
+import static io.trino.spi.type.BigintType.BIGINT;
+import static io.trino.spi.type.BooleanType.BOOLEAN;
+import static io.trino.spi.type.DateType.DATE;
+import static io.trino.spi.type.IntegerType.INTEGER;
+import static io.trino.spi.type.SmallintType.SMALLINT;
+import static io.trino.spi.type.TinyintType.TINYINT;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableList.Builder;
 import static com.google.common.collect.ImmutableList.builder;
 import static com.google.common.collect.Iterables.getOnlyElement;
+
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -138,15 +140,15 @@ public class IonSqlQueryBuilder {
         for (Range range : domain.getValues().getRanges().getOrderedRanges()) {
             checkState(!range.isAll());
             if (range.isSingleValue()) {
-                singleValues.add(range.getLow().getValue());
+                singleValues.add(range.getLowValue());
                 continue;
             }
             List<String> rangeConjuncts = new ArrayList<>();
-            if (!range.getLow().isLowerUnbounded()) {
-                notLowerBoundedSwitch(range, rangeConjuncts, type, position);
+            if (!range.isLowUnbounded()) {
+                rangeConjuncts.add(toPredicate(range.isLowInclusive() ? ">=" : ">", range.getLowBoundedValue(), type, position));
             }
-            if (!range.getHigh().isUpperUnbounded()) {
-                notUpperBoundedSwitch(range, rangeConjuncts, type, position);
+            if (!range.isHighUnbounded()) {
+                rangeConjuncts.add(toPredicate(range.isLowInclusive() ? ">=" : ">", range.getLowBoundedValue(), type, position));
             }
             // If rangeConjuncts is null, then the range was ALL, which should already have been checked for
             checkState(!rangeConjuncts.isEmpty());
@@ -178,36 +180,6 @@ public class IonSqlQueryBuilder {
         checkType(type);
 
         return format("%s %s %s", createColumn(type, position), operator, valueToQuery(type, value));
-    }
-
-    private void notLowerBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position) {
-        switch (range.getLow().getBound()) {
-            case ABOVE:
-                rangeConjuncts.add(toPredicate(">", range.getLow().getValue(), type, position));
-                break;
-            case EXACTLY:
-                rangeConjuncts.add(toPredicate(">=", range.getLow().getValue(), type, position));
-                break;
-            case BELOW:
-                throw new IllegalArgumentException("Low marker should never use BELOW bound");
-            default:
-                throw new AssertionError("Unhandled bound: " + range.getLow().getBound());
-        }
-    }
-
-    private void notUpperBoundedSwitch(Range range, List<String> rangeConjuncts, Type type, int position) {
-        switch (range.getHigh().getBound()) {
-            case ABOVE:
-                throw new IllegalArgumentException("High marker should never use ABOVE bound");
-            case EXACTLY:
-                rangeConjuncts.add(toPredicate("<=", range.getHigh().getValue(), type, position));
-                break;
-            case BELOW:
-                rangeConjuncts.add(toPredicate("<", range.getHigh().getValue(), type, position));
-                break;
-            default:
-                throw new AssertionError("Unhandled bound: " + range.getHigh().getBound());
-        }
     }
 
     private static void checkType(Type type) {

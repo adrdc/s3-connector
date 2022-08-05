@@ -15,15 +15,15 @@
  */
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.decoder.DecoderColumnHandle;
-import com.facebook.presto.decoder.FieldValueProvider;
+import io.airlift.log.Logger;
+import io.trino.decoder.DecoderColumnHandle;
+import io.trino.decoder.FieldValueProvider;
 
 import com.facebook.presto.s3.reader.RecordReader;
-import com.facebook.presto.spi.RecordCursor;
 
 import io.airlift.slice.Slice;
+import io.trino.spi.connector.RecordCursor;
+import io.trino.spi.type.Type;
 
 import java.util.List;
 import java.util.Map;

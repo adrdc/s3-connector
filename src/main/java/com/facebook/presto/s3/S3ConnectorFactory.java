@@ -16,26 +16,21 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.bootstrap.Bootstrap;
-import com.facebook.airlift.bootstrap.LifeCycleManager;
-import com.facebook.airlift.json.JsonModule;
-import com.facebook.presto.common.type.TypeManager;
-import com.facebook.presto.spi.ConnectorHandleResolver;
-import com.facebook.presto.spi.NodeManager;
-import com.facebook.presto.spi.SchemaTableName;
+import io.airlift.bootstrap.Bootstrap;
+import io.airlift.bootstrap.LifeCycleManager;
+import io.airlift.json.JsonModule;
+import io.airlift.log.Logger;
+import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorMetadata;
+import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorPageSinkProvider;
+import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorPageSourceProvider;
+import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorSplitManager;
+import io.trino.spi.NodeManager;
+import io.trino.spi.connector.*;
 
-import com.facebook.airlift.log.Logger;
-
-import com.facebook.presto.spi.connector.Connector;
-import com.facebook.presto.spi.connector.ConnectorContext;
-import com.facebook.presto.spi.connector.ConnectorFactory;
-import com.facebook.presto.spi.connector.classloader.ClassLoaderSafeConnectorMetadata;
-import com.facebook.presto.spi.connector.classloader.ClassLoaderSafeConnectorPageSinkProvider;
-import com.facebook.presto.spi.connector.classloader.ClassLoaderSafeConnectorPageSourceProvider;
-import com.facebook.presto.spi.connector.classloader.ClassLoaderSafeConnectorSplitManager;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import io.trino.spi.type.TypeManager;
 
 import java.util.Map;
 import java.util.Optional;

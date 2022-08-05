@@ -16,11 +16,11 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.ColumnMetadata;
-import com.facebook.presto.spi.ConnectorTableMetadata;
-import com.facebook.presto.spi.HostAddress;
-import com.facebook.presto.spi.PrestoException;
+import io.airlift.log.Logger;
+import io.trino.spi.HostAddress;
+import io.trino.spi.TrinoException;
+import io.trino.spi.connector.ColumnMetadata;
+import io.trino.spi.connector.ConnectorTableMetadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,8 +51,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.spi.StandardErrorCode.INVALID_TABLE_PROPERTY;
-import static com.facebook.presto.spi.StandardErrorCode.CONFIGURATION_INVALID;
+import static io.trino.spi.StandardErrorCode.CONFIGURATION_INVALID;
+import static io.trino.spi.StandardErrorCode.INVALID_TABLE_PROPERTY;
 import static java.lang.String.format;
 import static com.facebook.presto.s3.S3Const.*;
 
@@ -134,7 +134,7 @@ public class S3SchemaRegistryManager {
             if (property.getKey().equalsIgnoreCase("format")) {
                 file_format = (String) property.getValue();
                 if (!S3Const.isValidFormatForQuery(file_format)) {
-                    throw new PrestoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
+                    throw new TrinoException(S3ErrorCode.S3_UNSUPPORTED_FORMAT,
                             format("Unsupported table format for query: %s", file_format));
                 }
             } else if (property.getKey().equalsIgnoreCase("field_delimiter")) {
@@ -150,7 +150,7 @@ public class S3SchemaRegistryManager {
                     bucket = new URI(location).getHost();
                 } catch (URISyntaxException e) {
                     log.error("Incorrect location format: " + location);
-                    throw new PrestoException(CONFIGURATION_INVALID,
+                    throw new TrinoException(CONFIGURATION_INVALID,
                             format("Error processing schema string: %s", location));
                 }
                 log.debug("Table location. Bucket: " + bucket + ", prefix: " + prefix);
@@ -449,7 +449,7 @@ public class S3SchemaRegistryManager {
         } else if (type.equalsIgnoreCase(JSON_TYPE_BOOLEAN)) {
             node.put(JSON_PROP_TYPE, JSON_TYPE_BOOLEAN);
         } else {
-            throw new PrestoException(INVALID_TABLE_PROPERTY,
+            throw new TrinoException(INVALID_TABLE_PROPERTY,
                     format("Unknown type %s for column name %s", type, fieldName));
         }
     }

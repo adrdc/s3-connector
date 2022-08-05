@@ -16,7 +16,7 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.trino.spi.connector.ConnectorTransactionHandle;
 
 public enum S3TransactionHandle
         implements ConnectorTransactionHandle {

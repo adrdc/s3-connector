@@ -16,18 +16,18 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.decoder.RowDecoder;
+import io.airlift.log.Logger;
+import io.trino.decoder.RowDecoder;
 import com.facebook.presto.s3.reader.AvroRecordReader;
 import com.facebook.presto.s3.reader.CsvRecordReader;
 import com.facebook.presto.s3.reader.JsonRecordReader;
 import com.facebook.presto.s3.reader.RecordReader;
-import com.facebook.presto.spi.ColumnHandle;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.RecordCursor;
-import com.facebook.presto.spi.RecordSet;
+import io.trino.spi.connector.ColumnHandle;
+import io.trino.spi.connector.ConnectorSession;
 import com.google.common.collect.ImmutableList;
+import io.trino.spi.connector.RecordCursor;
+import io.trino.spi.connector.RecordSet;
+import io.trino.spi.type.Type;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.compress.CompressionCodec;
 

@@ -16,10 +16,10 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.ColumnMetadata;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import io.trino.spi.connector.ColumnMetadata;
 
 import java.util.List;
 import java.util.Map;

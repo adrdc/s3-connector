@@ -20,10 +20,10 @@
  */
 package com.facebook.presto.s3.decoder;
 
-import com.facebook.presto.decoder.DecoderColumnHandle;
-import com.facebook.presto.decoder.FieldValueProvider;
-import com.facebook.presto.decoder.RowDecoder;
-import com.facebook.presto.decoder.json.JsonFieldDecoder;
+import io.trino.decoder.DecoderColumnHandle;
+import io.trino.decoder.FieldValueProvider;
+import io.trino.decoder.RowDecoder;
+import io.trino.decoder.json.JsonFieldDecoder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.MissingNode;

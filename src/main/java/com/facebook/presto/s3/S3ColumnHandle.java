@@ -16,11 +16,11 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.decoder.DecoderColumnHandle;
+import io.trino.decoder.DecoderColumnHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.facebook.presto.spi.ColumnMetadata;
-import com.facebook.presto.common.type.Type;
+import io.trino.spi.connector.ColumnMetadata;
+import io.trino.spi.type.Type;
 
 import java.util.Objects;
 

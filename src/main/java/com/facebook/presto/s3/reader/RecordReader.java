@@ -15,8 +15,8 @@
  */
 package com.facebook.presto.s3.reader;
 
-import com.facebook.presto.decoder.DecoderColumnHandle;
-import com.facebook.presto.decoder.FieldValueProvider;
+import io.trino.decoder.DecoderColumnHandle;
+import io.trino.decoder.FieldValueProvider;
 
 import java.util.Map;
 

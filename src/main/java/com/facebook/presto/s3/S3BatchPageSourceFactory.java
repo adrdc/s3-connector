@@ -16,11 +16,10 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.common.predicate.TupleDomain;
-
-import com.facebook.presto.spi.ConnectorPageSource;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.SchemaTableName;
+import io.trino.spi.connector.ConnectorPageSource;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.predicate.TupleDomain;
 
 import java.util.List;
 import java.util.Optional;

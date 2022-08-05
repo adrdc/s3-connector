@@ -20,7 +20,7 @@ import com.facebook.presto.common.type.TimeType;
 import com.facebook.presto.common.type.TimestampType;
 import com.facebook.presto.s3.services.EmbeddedSchemaRegistry;
 import com.facebook.presto.spi.ColumnMetadata;
-import com.facebook.presto.spi.ConnectorTableMetadata;
+import io.trino.spi.connector.ConnectorTableMetadata;
 import com.facebook.presto.spi.SchemaTableName;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;

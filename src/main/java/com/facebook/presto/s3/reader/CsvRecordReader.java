@@ -15,10 +15,9 @@
  */
 package com.facebook.presto.s3.reader;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.decoder.DecoderColumnHandle;
-import com.facebook.presto.decoder.FieldValueProvider;
+import io.airlift.log.Logger;
+import io.trino.decoder.DecoderColumnHandle;
+import io.trino.decoder.FieldValueProvider;
 import com.facebook.presto.s3.BytesLineReader;
 import com.facebook.presto.s3.CountingInputStream;
 import com.facebook.presto.s3.S3ColumnHandle;
@@ -28,6 +27,7 @@ import com.facebook.presto.s3.S3TableLayoutHandle;
 import com.facebook.presto.s3.decoder.CsvFieldValueProvider;
 import com.facebook.presto.s3.decoder.CsvRecord;
 import com.facebook.presto.s3.decoder.DateFieldValueProvider;
+import io.trino.spi.type.Type;
 
 import java.io.Closeable;
 import java.util.HashMap;
@@ -35,9 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.facebook.presto.common.type.DateType.DATE;
-import static com.facebook.presto.common.type.TimeType.TIME;
-import static com.facebook.presto.common.type.TimestampType.TIMESTAMP;
+import static io.trino.spi.type.DateType.DATE;
+import static io.trino.spi.type.TimeType.TIME;
+import static io.trino.spi.type.TimestampType.TIMESTAMP;
 import static com.facebook.presto.s3.S3Const.*;
 
 public class CsvRecordReader

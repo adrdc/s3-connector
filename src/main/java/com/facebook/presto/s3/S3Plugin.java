@@ -16,10 +16,10 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.Plugin;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.spi.connector.ConnectorFactory;
+import io.trino.spi.Plugin;
+import io.trino.spi.connector.ConnectorFactory;
 import com.google.common.collect.ImmutableList;
+import io.trino.spi.connector.SchemaTableName;
 
 import java.util.Map;
 import java.util.Optional;

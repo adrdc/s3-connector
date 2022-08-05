@@ -19,28 +19,17 @@
  */
 package com.facebook.presto.s3.parquet;
 
-import com.facebook.presto.common.predicate.Domain;
-import com.facebook.presto.common.predicate.TupleDomain;
-import com.facebook.presto.common.type.RowType;
-import com.facebook.presto.common.type.StandardTypes;
-import com.facebook.presto.common.type.Type;
 import com.facebook.presto.s3.S3ColumnHandle;
 import com.facebook.presto.s3.S3AccessObject;
-import com.facebook.presto.memory.context.AggregatedMemoryContext;
-import com.facebook.presto.parquet.Field;
-import com.facebook.presto.parquet.ParquetCorruptionException;
-import com.facebook.presto.parquet.ParquetDataSource;
-import com.facebook.presto.parquet.RichColumnDescriptor;
-import com.facebook.presto.parquet.cache.ParquetMetadataSource;
-import com.facebook.presto.parquet.predicate.Predicate;
-import com.facebook.presto.parquet.reader.ParquetReader;
-import com.facebook.presto.spi.ConnectorPageSource;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.SchemaTableName;
+import io.trino.memory.context.AggregatedMemoryContext;
+import io.trino.parquet.ParquetDataSource;
+import io.trino.spi.connector.ConnectorPageSource;
+import io.trino.spi.connector.ConnectorSession;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.units.DataSize;
+import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.predicate.TupleDomain;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.parquet.column.ColumnDescriptor;
@@ -62,27 +51,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.common.type.StandardTypes.*;
 import static com.facebook.presto.s3.S3Const.*;
 import static com.facebook.presto.s3.S3ErrorCode.*;
 import static com.facebook.presto.s3.parquet.S3ParquetDataSource.buildS3ParquetDataSource;
-import static com.facebook.presto.memory.context.AggregatedMemoryContext.newSimpleAggregatedMemoryContext;
-import static com.facebook.presto.parquet.ParquetTypeUtils.*;
-import static com.facebook.presto.parquet.predicate.PredicateUtils.buildPredicate;
-import static com.facebook.presto.parquet.predicate.PredicateUtils.predicateMatches;
-import static com.facebook.presto.spi.StandardErrorCode.PERMISSION_DENIED;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.nullToEmpty;
+import static io.trino.memory.context.AggregatedMemoryContext.newSimpleAggregatedMemoryContext;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.apache.parquet.io.ColumnIOConverter.constructField;
 
 public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchPageSourceFactory {
-    private final ParquetMetadataSource parquetMetadataSource;
+    private final ParquetMetadata parquetMetadataSource;
     private final S3AccessObject accessObject;
 
     @Inject
-    public ParquetPageSourceFactory(ParquetMetadataSource parquetMetadataSource,
+    public ParquetPageSourceFactory(ParquetMetadata parquetMetadataSource,
                                     S3AccessObject accessObject) {
         this.parquetMetadataSource = requireNonNull(parquetMetadataSource, "parquetMetadataSource is null");
         this.accessObject = requireNonNull(accessObject, "hdfsEnvironment is null");
@@ -129,17 +113,20 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             DataSize maxReadBlockSize,
             boolean batchReaderEnabled,
             boolean verificationEnabled,
-            ParquetMetadataSource parquetMetadataSource,
+            ParquetMetadata parquetMetadataSource,
             TupleDomain<S3ColumnHandle> effectivePredicate) {
         AggregatedMemoryContext systemMemoryContext = newSimpleAggregatedMemoryContext();
 
         ParquetDataSource dataSource = null;
         try {
             FSDataInputStream inputStream = accessObject.getFsDataInputStream(bucket, key, 65536);
-            dataSource = buildS3ParquetDataSource(inputStream, bucket + key);
-            long filesize = accessObject.getObjectLength(bucket, key);
-            ParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(dataSource, filesize, false).getParquetMetadata();
 
+            long filesize = accessObject.getObjectLength(bucket, key);
+            dataSource = buildS3ParquetDataSource(inputStream, filesize, bucket + key);
+
+            // ADR: TODOParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(dataSource, filesize, false).getParquetMetadata();
+
+            //parquetMetadataSource.getFileMetaData()
             FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
             MessageType fileSchema = fileMetaData.getSchema();
 

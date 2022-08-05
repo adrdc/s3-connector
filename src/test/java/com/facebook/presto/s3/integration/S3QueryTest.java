@@ -45,7 +45,7 @@ import static org.testng.Assert.*;
 
 @Test
 public class S3QueryTest {
-    private final boolean scality = true;
+    private final boolean scality = false;
 
     private Process p1 = null;
     private QueryRunner queryRunner;

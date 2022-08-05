@@ -16,12 +16,12 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorSplitSource;
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
-import com.facebook.presto.spi.connector.ConnectorSplitManager;
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.airlift.log.Logger;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.ConnectorSplitSource;
+import io.trino.spi.connector.ConnectorTableLayoutHandle;
+import io.trino.spi.connector.ConnectorSplitManager;
+import io.trino.spi.connector.ConnectorTransactionHandle;
 
 import java.util.Iterator;
 
@@ -51,7 +51,7 @@ public class S3SplitManager
     }
 
     @Override
-    public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorTableLayoutHandle layout, SplitSchedulingContext splitSchedulingContext) {
+    public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorTableLayoutHandle layout, SplitSchedulingStrategy splitSchedulingStrategy) {
 
         S3TableLayoutHandle layoutHandle = checkType(layout, S3TableLayoutHandle.class, "layout");
 
@@ -65,7 +65,7 @@ public class S3SplitManager
                     layoutHandle.getTable().getBucketObjectsMap(),
                     rangeBytes, batchSize);
         } else {
-            objectContentsIterator = new Iterator<S3ObjectRange>() {
+            objectContentsIterator = new Iterator<>() {
                 int objectCount = layoutHandle.getTable().getBucketObjectsMap().size();
 
                 @Override

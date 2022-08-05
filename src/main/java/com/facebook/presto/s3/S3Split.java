@@ -16,9 +16,8 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.HostAddress;
-import com.facebook.presto.spi.schedule.NodeSelectionStrategy;
+import io.trino.spi.HostAddress;
+import io.trino.spi.connector.ConnectorSplit;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
-import static com.facebook.presto.spi.schedule.NodeSelectionStrategy.NO_PREFERENCE;
 
 public class S3Split
         implements ConnectorSplit {
@@ -90,12 +88,12 @@ public class S3Split
     }
 
     @Override
-    public NodeSelectionStrategy getNodeSelectionStrategy() {
-        return NO_PREFERENCE;
+    public boolean isRemotelyAccessible() {
+        return true;
     }
 
     @Override
-    public List<HostAddress> getPreferredNodes(List<HostAddress> sortedCandidates) {
+    public List<HostAddress> getAddresses() {
         return s3Nodes;
     }
 

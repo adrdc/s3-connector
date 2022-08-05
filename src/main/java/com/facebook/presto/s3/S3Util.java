@@ -16,10 +16,10 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.PrestoException;
-import com.facebook.presto.spi.session.PropertyMetadata;
+import io.trino.spi.TrinoException;
+import io.trino.spi.connector.ConnectorSession;
 import io.airlift.units.DataSize;
+import io.trino.spi.session.PropertyMetadata;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -114,10 +114,10 @@ public class S3Util {
                         false));
 
         propertyMetadataList.add(
-                PropertyMetadata.dataSizeProperty(
+                PropertyMetadata.longProperty(
                         PARQUET_MAX_READ_BLOCK_SIZE,
                         "Parquet: Maximum size of a block to read",
-                        new DataSize(16, MEGABYTE),
+                        16 * MEGABYTE.inBytes(),
                         false));
 
         propertyMetadataList.add(
@@ -152,7 +152,7 @@ public class S3Util {
     public static boolean boolProp(ConnectorSession session, String prop, boolean dflt) {
         try {
             return session.getProperty(prop, Boolean.class);
-        } catch (PrestoException e) {
+        } catch (TrinoException e) {
             return dflt;
         }
     }
@@ -160,7 +160,7 @@ public class S3Util {
     public static int intProp(ConnectorSession session, String prop, int dflt) {
         try {
             return session.getProperty(prop, Integer.class);
-        } catch (PrestoException e) {
+        } catch (TrinoException e) {
             return dflt;
         }
     }

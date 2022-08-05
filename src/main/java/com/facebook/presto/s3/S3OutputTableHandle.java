@@ -16,12 +16,12 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.presto.spi.ConnectorOutputTableHandle;
-import com.facebook.presto.spi.SchemaTableName;
-import com.facebook.presto.common.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import io.trino.spi.connector.ConnectorOutputTableHandle;
+import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.type.Type;
 
 import java.util.List;
 import java.util.Map;

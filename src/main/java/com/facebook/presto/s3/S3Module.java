@@ -19,19 +19,17 @@ package com.facebook.presto.s3;
 import com.facebook.airlift.configuration.AbstractConfigurationAwareModule;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeManager;
-import com.facebook.presto.decoder.DispatchingRowDecoderFactory;
-import com.facebook.presto.decoder.RowDecoderFactory;
-import com.facebook.presto.decoder.avro.AvroRowDecoder;
-import com.facebook.presto.decoder.avro.AvroRowDecoderFactory;
-import com.facebook.presto.decoder.csv.CsvRowDecoder;
-import com.facebook.presto.decoder.csv.CsvRowDecoderFactory;
-import com.facebook.presto.decoder.dummy.DummyRowDecoder;
-import com.facebook.presto.decoder.dummy.DummyRowDecoderFactory;
-import com.facebook.presto.decoder.raw.RawRowDecoder;
-import com.facebook.presto.decoder.raw.RawRowDecoderFactory;
-import com.facebook.presto.parquet.cache.MetadataReader;
-import com.facebook.presto.parquet.cache.ParquetCacheConfig;
-import com.facebook.presto.parquet.cache.ParquetMetadataSource;
+import io.airlift.configuration.AbstractConfigurationAwareModule;
+import io.trino.decoder.DispatchingRowDecoderFactory;
+import io.trino.decoder.RowDecoderFactory;
+import io.trino.decoder.avro.AvroRowDecoder;
+import io.trino.decoder.avro.AvroRowDecoderFactory;
+import io.trino.decoder.csv.CsvRowDecoder;
+import io.trino.decoder.csv.CsvRowDecoderFactory;
+import io.trino.decoder.dummy.DummyRowDecoder;
+import io.trino.decoder.dummy.DummyRowDecoderFactory;
+import io.trino.decoder.raw.RawRowDecoder;
+import io.trino.decoder.raw.RawRowDecoderFactory;
 import com.facebook.presto.s3.decoder.JsonRowDecoder;
 import com.facebook.presto.s3.decoder.JsonRowDecoderFactory;
 import com.facebook.presto.s3.parquet.ParquetPageSourceFactory;
@@ -41,6 +39,9 @@ import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import io.trino.parquet.reader.MetadataReader;
+import io.trino.spi.type.Type;
+import io.trino.spi.type.TypeManager;
 import org.weakref.jmx.MBeanExporter;
 import org.weakref.jmx.testing.TestingMBeanServer;
 
@@ -48,13 +49,15 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.management.MBeanServer;
 
-import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
-import static com.facebook.airlift.json.JsonBinder.jsonBinder;
-import static com.facebook.airlift.json.JsonCodecBinder.jsonCodecBinder;
-import static com.facebook.presto.common.type.TypeSignature.parseTypeSignature;
+import java.util.HashSet;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.inject.Scopes.SINGLETON;
 import static com.google.inject.multibindings.Multibinder.newSetBinder;
+import static io.airlift.configuration.ConfigBinder.configBinder;
+import static io.airlift.json.JsonBinder.jsonBinder;
+import static io.airlift.json.JsonCodecBinder.jsonCodecBinder;
+import static io.trino.sql.analyzer.TypeSignatureTranslator.parseTypeSignature;
 import static java.util.Objects.requireNonNull;
 
 public class S3Module
@@ -92,7 +95,7 @@ public class S3Module
             decoderFactoriesByName.addBinding(DummyRowDecoder.NAME).to(DummyRowDecoderFactory.class).in(SINGLETON);
             decoderFactoriesByName.addBinding(CsvRowDecoder.NAME).to(CsvRowDecoderFactory.class).in(SINGLETON);
             decoderFactoriesByName.addBinding(RawRowDecoder.NAME).to(RawRowDecoderFactory.class).in(SINGLETON);
-            decoderFactoriesByName.addBinding(AvroRowDecoder.NAME).to(AvroRowDecoderFactory.class).in(SINGLETON);
+            decoderFactoriesByName.addBinding(AvroRowDecoderFactory.NAME).to(AvroRowDecoderFactory.class).in(SINGLETON);
             decoderFactoriesByName.addBinding(JsonRowDecoder.NAME).to(JsonRowDecoderFactory.class).in(SINGLETON);
             binder1.bind(DispatchingRowDecoderFactory.class).in(SINGLETON);
         });
@@ -117,7 +120,7 @@ public class S3Module
 
         @Override
         protected Type _deserialize(String value, DeserializationContext context) {
-            Type type = typeManager.getType(parseTypeSignature(value));
+            Type type = typeManager.getType(parseTypeSignature(value, new HashSet<>()));
             checkArgument(type != null, "Unknown type %s", value);
             return type;
         }
