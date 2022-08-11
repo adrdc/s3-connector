@@ -17,17 +17,16 @@
 package com.facebook.presto.s3;
 
 import io.airlift.log.Logger;
+import io.trino.spi.connector.RetryMode;
+import io.trino.spi.security.TrinoPrincipal;
 import io.trino.spi.type.Type;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
 import io.trino.spi.connector.ConnectorInsertTableHandle;
-import io.trino.spi.connector.ConnectorNewTableLayout;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.connector.ConnectorTableHandle;
 import io.trino.spi.connector.ConnectorTableLayout;
-import io.trino.spi.connector.ConnectorTableLayoutHandle;
-import io.trino.spi.connector.ConnectorTableLayoutResult;
 import io.trino.spi.connector.ConnectorTableMetadata;
 import io.trino.spi.connector.Constraint;
 import io.trino.spi.TrinoException;
@@ -54,6 +53,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.s3.S3Const.*;
+import static com.google.common.base.Preconditions.checkState;
 import static io.trino.spi.StandardErrorCode.NOT_SUPPORTED;
 import static java.lang.String.format;
 import static com.facebook.presto.s3.Types.checkType;
@@ -109,18 +109,6 @@ public class S3Metadata
     }
 
     @Override
-    public List<ConnectorTableLayoutResult> getTableLayouts(ConnectorSession session, ConnectorTableHandle table, Constraint<ColumnHandle> constraint, Optional<Set<ColumnHandle>> desiredColumns) {
-        S3TableHandle tableHandle = checkType(table, S3TableHandle.class, "table");
-        ConnectorTableLayout layout = new ConnectorTableLayout(new S3TableLayoutHandle(tableHandle, constraint.getSummary()));
-        return ImmutableList.of(new ConnectorTableLayoutResult(layout, constraint.getSummary()));
-    }
-
-    @Override
-    public ConnectorTableLayout getTableLayout(ConnectorSession session, ConnectorTableLayoutHandle handle) {
-        return new ConnectorTableLayout(handle);
-    }
-
-    @Override
     public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table) {
         S3TableHandle s3TableHandle = checkType(table, S3TableHandle.class, "table");
         checkArgument(s3TableHandle.getConnectorId().equals(connectorId), "tableHandle is not for this connector");
@@ -153,7 +141,7 @@ public class S3Metadata
     }
 
     @Override
-    public void createSchema(ConnectorSession session, String schemaName, Map<String, Object> properties) {
+    public void createSchema(ConnectorSession session, String schemaName, Map<String, Object> properties, TrinoPrincipal principal) {
         if (schemaRegistryManager.schemaExists(schemaName)) {
             throw new TrinoException(S3ErrorCode.S3_SCHEMA_ALREADY_EXISTS, format("Schema %s already exists", schemaName));
         }
@@ -185,7 +173,7 @@ public class S3Metadata
     }
 
     @Override
-    public S3OutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, Optional<ConnectorNewTableLayout> layout) {
+    public ConnectorOutputTableHandle beginCreateTable(ConnectorSession session, ConnectorTableMetadata tableMetadata, Optional<ConnectorTableLayout> layout, RetryMode retryMode) {
         if (schemaRegistryManager.tableSchemaExists(tableMetadata.getTable().getSchemaName(), tableMetadata.getTable().getTableName())) {
             throw new TrinoException(S3ErrorCode.S3_TABLE_ALREADY_EXISTS, format("Table %s in schema %s already exists",
                     tableMetadata.getTable().getTableName(), tableMetadata.getTable().getSchemaName()));
@@ -236,7 +224,7 @@ public class S3Metadata
     }
 
     @Override
-    public S3InsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle) {
+    public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle, List<ColumnHandle> columns, RetryMode retryMode) {
         S3TableHandle s3TableHandle = checkType(tableHandle, S3TableHandle.class, "tableHandle");
         S3Table s3Table = tableDescriptions.get(s3TableHandle.toSchemaTableName());
         String tableName = s3TableHandle.getTableName();
@@ -249,11 +237,11 @@ public class S3Metadata
         }
         checkArgument(s3TableHandle.getConnectorId().equals(connectorId), "tableHandle is not for this connector");
         log.debug("Begin Insert for table: " + s3TableHandle.getTableName() + " with output format " + objectDataFormat);
-        List<S3ColumnHandle> columns = (List) getColumnHandles(session, s3TableHandle).values();
-        List<String> columnNames = columns.stream().map(S3ColumnHandle::getName).collect(Collectors.toList());
-        List<Type> columnTypes = columns.stream().map(S3ColumnHandle::getType).collect(Collectors.toList());
+        List<S3ColumnHandle> s3Cols = (List) getColumnHandles(session, s3TableHandle).values();
+        List<String> columnNames = s3Cols.stream().map(S3ColumnHandle::getName).collect(Collectors.toList());
+        List<Type> columnTypes = s3Cols.stream().map(S3ColumnHandle::getType).collect(Collectors.toList());
 
-        S3InsertTableHandle handle = new S3InsertTableHandle(
+        return new S3InsertTableHandle(
                 connectorId,
                 schemaName,
                 tableName,
@@ -265,7 +253,6 @@ public class S3Metadata
                 s3Table.getRecordDelimiter(),
                 s3Table.getFieldDelimiter(),
                 objectDataFormat);
-        return handle;
     }
 
     @Override
@@ -313,13 +300,16 @@ public class S3Metadata
     @Override
     public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(ConnectorSession session, SchemaTablePrefix prefix) {
         requireNonNull(prefix, "prefix is null");
+        checkState(prefix.getSchema().isPresent());
+
         ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
         List<SchemaTableName> tableNames;
-        if (prefix.getTableName() == null) {
-            tableNames = listTables(session, Optional.of(requireNonNull(prefix.getSchemaName(),
+
+        if (prefix.getTable().isEmpty()) {
+            tableNames = listTables(session, Optional.of(requireNonNull(prefix.getSchema().get(),
                     "schemaName is null")));
         } else {
-            tableNames = ImmutableList.of(new SchemaTableName(prefix.getSchemaName(), prefix.getTableName()));
+            tableNames = ImmutableList.of(new SchemaTableName(prefix.getSchema().get(), prefix.getTable().get()));
         }
         for (SchemaTableName tableName : tableNames) {
             ConnectorTableMetadata tableMetadata = getTableMetadata(tableName);

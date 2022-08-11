@@ -29,12 +29,15 @@ import io.trino.spi.block.LazyBlockLoader;
 import io.trino.spi.block.RunLengthEncodedBlock;
 import io.trino.spi.connector.ConnectorPageSource;
 import com.google.common.collect.ImmutableList;
+import io.trino.spi.metrics.Metrics;
 import io.trino.spi.type.Type;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
 
 import static com.facebook.presto.s3.S3ErrorCode.S3_BAD_DATA;
 import static com.facebook.presto.s3.S3ErrorCode.S3_CURSOR_ERROR;
@@ -47,7 +50,9 @@ public class ParquetPageSource implements ConnectorPageSource {
     private final List<Optional<Field>> fields;
 
     private int batchId;
+
     private long completedPositions;
+
     private boolean closed;
 
     public ParquetPageSource(
@@ -65,8 +70,8 @@ public class ParquetPageSource implements ConnectorPageSource {
     }
 
     @Override
-    public long getCompletedPositions() {
-        return completedPositions;
+    public OptionalLong getCompletedPositions() {
+        return OptionalLong.of(completedPositions);
     }
 
     @Override
@@ -77,11 +82,6 @@ public class ParquetPageSource implements ConnectorPageSource {
     @Override
     public boolean isFinished() {
         return closed;
-    }
-
-    @Override
-    public long getSystemMemoryUsage() {
-        return parquetReader.getSystemMemoryContext().getBytes();
     }
 
     @Override
@@ -101,7 +101,7 @@ public class ParquetPageSource implements ConnectorPageSource {
             for (int fieldId = 0; fieldId < blocks.length; fieldId++) {
                 Optional<Field> field = fields.get(fieldId);
                 if (field.isPresent()) {
-                    blocks[fieldId] = new LazyBlock(batchSize, new com.facebook.presto.s3.parquet.ParquetPageSource.ParquetBlockLoader(field.get()));
+                    blocks[fieldId] = new LazyBlock(batchSize, new ParquetBlockLoader(field.get()));
                 } else {
                     blocks[fieldId] = RunLengthEncodedBlock.create(types.get(fieldId), null, batchSize);
                 }
@@ -114,6 +114,11 @@ public class ParquetPageSource implements ConnectorPageSource {
             closeWithSuppression(e);
             throw new TrinoException(S3_CURSOR_ERROR, e);
         }
+    }
+
+    @Override
+    public long getMemoryUsage() {
+        return parquetReader.getMemoryContext().getBytes();
     }
 
     private void closeWithSuppression(Throwable throwable) {
@@ -140,6 +145,16 @@ public class ParquetPageSource implements ConnectorPageSource {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    public CompletableFuture<?> isBlocked() {
+        return ConnectorPageSource.super.isBlocked();
+    }
+
+    @Override
+    public Metrics getMetrics() {
+        return ConnectorPageSource.super.getMetrics();
     }
 
     private final class ParquetBlockLoader

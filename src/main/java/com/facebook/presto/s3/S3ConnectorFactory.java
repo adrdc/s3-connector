@@ -25,11 +25,14 @@ import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorPageSinkProvider
 import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorPageSourceProvider;
 import io.trino.plugin.base.classloader.ClassLoaderSafeConnectorSplitManager;
 import io.trino.spi.NodeManager;
-import io.trino.spi.connector.*;
+import io.trino.spi.connector.Connector;
+import io.trino.spi.connector.ConnectorContext;
+import io.trino.spi.connector.ConnectorFactory;
 
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
+import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.type.TypeManager;
 
 import java.util.Map;
@@ -55,11 +58,6 @@ public class S3ConnectorFactory
     @Override
     public String getName() {
         return "s3";
-    }
-
-    @Override
-    public ConnectorHandleResolver getHandleResolver() {
-        return new S3HandleResolver();
     }
 
     @Override

@@ -17,6 +17,8 @@
 package com.facebook.presto.s3.parquet;
 
 import alluxio.shaded.client.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 import io.trino.parquet.ChunkReader;
@@ -115,8 +117,8 @@ public class S3ParquetDataSource implements ParquetDataSource {
     }
 
     @Override
-    public <K> Map<K, ChunkReader> planRead(Map<K, DiskRange> diskRanges) {
-        return ImmutableMap.of();
+    public <K> ListMultimap<K, ChunkReader> planRead(ListMultimap<K, DiskRange> diskRanges) {
+        return ImmutableListMultimap.of();
     }
 
     public static S3ParquetDataSource buildS3ParquetDataSource(FSDataInputStream inputStream, long estimatedSize, String bucketObjectName) {

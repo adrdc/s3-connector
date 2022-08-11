@@ -22,14 +22,25 @@ package com.facebook.presto.s3.parquet;
 import com.facebook.presto.s3.S3ColumnHandle;
 import com.facebook.presto.s3.S3AccessObject;
 import io.trino.memory.context.AggregatedMemoryContext;
+import io.trino.parquet.Field;
+import io.trino.parquet.ParquetCorruptionException;
 import io.trino.parquet.ParquetDataSource;
+import io.trino.parquet.ParquetReaderOptions;
+import io.trino.parquet.RichColumnDescriptor;
+import io.trino.parquet.predicate.Predicate;
+import io.trino.parquet.reader.ParquetReader;
+import io.trino.spi.TrinoException;
 import io.trino.spi.connector.ConnectorPageSource;
 import io.trino.spi.connector.ConnectorSession;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.units.DataSize;
 import io.trino.spi.connector.SchemaTableName;
+import io.trino.spi.predicate.Domain;
 import io.trino.spi.predicate.TupleDomain;
+import io.trino.spi.type.RowType;
+import io.trino.spi.type.StandardTypes;
+import io.trino.spi.type.Type;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.parquet.column.ColumnDescriptor;
@@ -40,33 +51,44 @@ import org.apache.parquet.io.MessageColumnIO;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
+import org.joda.time.DateTimeZone;
 
 import javax.inject.Inject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.facebook.presto.s3.S3Const.*;
-import static com.facebook.presto.s3.S3ErrorCode.*;
+import static com.facebook.presto.s3.S3Const.getParquetMaxReadBlockSize;
+import static com.facebook.presto.s3.S3Const.isUseParquetColumnNames;
+import static com.facebook.presto.s3.S3ErrorCode.S3_BAD_DATA;
+import static com.facebook.presto.s3.S3ErrorCode.S3_CANNOT_OPEN_SPLIT;
+import static com.facebook.presto.s3.S3ErrorCode.S3_MISSING_DATA;
+import static com.facebook.presto.s3.S3ErrorCode.S3_PARTITION_SCHEMA_MISMATCH;
 import static com.facebook.presto.s3.parquet.S3ParquetDataSource.buildS3ParquetDataSource;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.nullToEmpty;
 import static io.trino.memory.context.AggregatedMemoryContext.newSimpleAggregatedMemoryContext;
+import static io.trino.parquet.ParquetTypeUtils.*;
+import static io.trino.parquet.predicate.PredicateUtils.buildPredicate;
+import static io.trino.parquet.predicate.PredicateUtils.predicateMatches;
+import static io.trino.plugin.hive.parquet.HiveParquetColumnIOConverter.constructField;
+import static io.trino.spi.StandardErrorCode.PERMISSION_DENIED;
+import static io.trino.spi.type.StandardTypes.*;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static org.apache.parquet.io.ColumnIOConverter.constructField;
 
 public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchPageSourceFactory {
-    private final ParquetMetadata parquetMetadataSource;
+    private final ParquetMetadataSource parquetMetadataSource;
     private final S3AccessObject accessObject;
 
     @Inject
-    public ParquetPageSourceFactory(ParquetMetadata parquetMetadataSource,
+    public ParquetPageSourceFactory(ParquetMetadataSource parquetMetadataSource,
                                     S3AccessObject accessObject) {
         this.parquetMetadataSource = requireNonNull(parquetMetadataSource, "parquetMetadataSource is null");
         this.accessObject = requireNonNull(accessObject, "hdfsEnvironment is null");
@@ -92,10 +114,8 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                 columns,
                 tableName,
                 isUseParquetColumnNames(session),
-                isFailOnCorruptedParquetStatistics(session),
                 getParquetMaxReadBlockSize(session),
-                isParquetBatchReadsEnabled(session),
-                isParquetBatchReaderVerificationEnabled(session),
+                DateTimeZone.UTC /* TODO: where from */,
                 parquetMetadataSource,
                 effectivePredicate));
     }
@@ -109,11 +129,9 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             List<S3ColumnHandle> columns,
             SchemaTableName tableName,
             boolean useParquetColumnNames,
-            boolean failOnCorruptedParquetStatistics,
             DataSize maxReadBlockSize,
-            boolean batchReaderEnabled,
-            boolean verificationEnabled,
-            ParquetMetadata parquetMetadataSource,
+            DateTimeZone dateTimeZone,
+            ParquetMetadataSource parquetMetadataSource,
             TupleDomain<S3ColumnHandle> effectivePredicate) {
         AggregatedMemoryContext systemMemoryContext = newSimpleAggregatedMemoryContext();
 
@@ -124,9 +142,8 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
             long filesize = accessObject.getObjectLength(bucket, key);
             dataSource = buildS3ParquetDataSource(inputStream, filesize, bucket + key);
 
-            // ADR: TODOParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(dataSource, filesize, false).getParquetMetadata();
+            ParquetMetadata parquetMetadata = parquetMetadataSource.getParquetMetadata(dataSource);
 
-            //parquetMetadataSource.getFileMetaData()
             FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
             MessageType fileSchema = fileMetaData.getSchema();
 
@@ -149,23 +166,33 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
 
             Map<List<String>, RichColumnDescriptor> descriptorsByPath = getDescriptors(fileSchema, requestedSchema);
             TupleDomain<ColumnDescriptor> parquetTupleDomain = getParquetTupleDomain(descriptorsByPath, effectivePredicate);
-            Predicate parquetPredicate = buildPredicate(requestedSchema, parquetTupleDomain, descriptorsByPath);
+            Predicate parquetPredicate = buildPredicate(requestedSchema, parquetTupleDomain, descriptorsByPath, dateTimeZone);
             final ParquetDataSource finalDataSource = dataSource;
             ImmutableList.Builder<BlockMetaData> blocks = ImmutableList.builder();
+            long blockStart = 0;
+            List<Long> firstRowsOfBlocks = new ArrayList<>();
             for (BlockMetaData block : footerBlocks.build()) {
-                if (predicateMatches(parquetPredicate, block, finalDataSource, descriptorsByPath, parquetTupleDomain, failOnCorruptedParquetStatistics)) {
+                if (predicateMatches(parquetPredicate, block, finalDataSource, descriptorsByPath, parquetTupleDomain)) {
                     blocks.add(block);
+                    firstRowsOfBlocks.add(blockStart);
                 }
+                blockStart += block.getRowCount();
             }
             MessageColumnIO messageColumnIO = getColumnIO(fileSchema, requestedSchema);
+
+            ParquetReaderOptions options =
+                    new ParquetReaderOptions()
+                            .withMaxReadBlockSize(maxReadBlockSize);
+
             ParquetReader parquetReader = new ParquetReader(
+                    Optional.empty(),
                     messageColumnIO,
                     blocks.build(),
+                    firstRowsOfBlocks,
                     dataSource,
+                    dateTimeZone,
                     systemMemoryContext,
-                    maxReadBlockSize,
-                    batchReaderEnabled,
-                    verificationEnabled);
+                    options);
 
             ImmutableList.Builder<String> namesBuilder = ImmutableList.builder();
             ImmutableList.Builder<Type> typesBuilder = ImmutableList.builder();
@@ -193,24 +220,24 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                 }
             } catch (IOException ignored) {
             }
-            if (e instanceof PrestoException) {
-                throw (PrestoException) e;
+            if (e instanceof TrinoException) {
+                throw (TrinoException) e;
             }
             if (e instanceof ParquetCorruptionException) {
-                throw new PrestoException(S3_BAD_DATA, e);
+                throw new TrinoException(S3_BAD_DATA, e);
             }
             if (e instanceof AccessControlException) {
-                throw new PrestoException(PERMISSION_DENIED, e.getMessage(), e);
+                throw new TrinoException(PERMISSION_DENIED, e.getMessage(), e);
             }
             if (nullToEmpty(e.getMessage()).trim().equals("Filesystem closed") ||
                     e instanceof FileNotFoundException) {
-                throw new PrestoException(S3_CANNOT_OPEN_SPLIT, e);
+                throw new TrinoException(S3_CANNOT_OPEN_SPLIT, e);
             }
             String message = format("Error opening S3 split %s (offset=%s, length=%s): %s", bucket + key, start, length, e.getMessage());
             if (e.getClass().getSimpleName().equals("BlockMissingException")) {
-                throw new PrestoException(S3_MISSING_DATA, message, e);
+                throw new TrinoException(S3_MISSING_DATA, message, e);
             }
-            throw new PrestoException(S3_CANNOT_OPEN_SPLIT, message, e);
+            throw new TrinoException(S3_CANNOT_OPEN_SPLIT, message, e);
         }
     }
 
@@ -251,7 +278,7 @@ public class ParquetPageSourceFactory implements com.facebook.presto.s3.S3BatchP
                 group.writeToStringBuilder(builder, "");
                 parquetTypeName = builder.toString();
             }
-            throw new PrestoException(S3_PARTITION_SCHEMA_MISMATCH, format("The column %s of table %s is declared as type %s, but the Parquet file (%s) declares the column as type %s",
+            throw new TrinoException(S3_PARTITION_SCHEMA_MISMATCH, format("The column %s of table %s is declared as type %s, but the Parquet file (%s) declares the column as type %s",
                     column.getName(),
                     tableName.toString(),
                     column.getType(),

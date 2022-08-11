@@ -50,8 +50,8 @@ import com.emc.object.s3.bean.MetadataSearchDatatype;
 import com.emc.object.s3.bean.MetadataSearchKey;
 import com.emc.object.s3.bean.MetadataSearchList;
 import com.emc.object.s3.jersey.S3JerseyClient;
-import com.facebook.airlift.log.Logger;
 import com.google.common.annotations.VisibleForTesting;
+import io.airlift.log.Logger;
 import io.airlift.units.DataSize;
 
 import java.io.ByteArrayInputStream;

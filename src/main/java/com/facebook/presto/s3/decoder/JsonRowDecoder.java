@@ -53,8 +53,7 @@ public class JsonRowDecoder
     }
 
     @Override
-    public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data,
-                                                                            Map<String, String> dataMap) {
+    public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data) {
         JsonNode tree;
         try {
             tree = objectMapper.readTree(data);
@@ -76,8 +75,7 @@ public class JsonRowDecoder
 
     public Optional<Map<DecoderColumnHandle, FieldValueProvider>> decodeRow(byte[] data,
                                                                             int offset,
-                                                                            int length,
-                                                                            Map<String, String> dataMap) {
+                                                                            int length) {
         JsonNode tree;
         try {
             tree = objectMapper.readTree(data, offset, length);

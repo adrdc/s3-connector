@@ -19,10 +19,19 @@ package com.facebook.presto.s3;
 import io.airlift.log.Logger;
 import io.trino.decoder.DispatchingRowDecoderFactory;
 import io.trino.decoder.RowDecoder;
-import io.trino.spi.connector.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import io.trino.spi.connector.ColumnHandle;
+import io.trino.spi.connector.ConnectorPageSource;
+import io.trino.spi.connector.ConnectorPageSourceProvider;
+import io.trino.spi.connector.ConnectorSession;
+import io.trino.spi.connector.ConnectorSplit;
+import io.trino.spi.connector.ConnectorTableHandle;
+import io.trino.spi.connector.ConnectorTransactionHandle;
+import io.trino.spi.connector.DynamicFilter;
+import io.trino.spi.connector.RecordPageSource;
+import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.predicate.TupleDomain;
 import io.trino.spi.type.TypeManager;
 
@@ -122,7 +131,7 @@ public class S3PageSourceProvider
                                                       .map(S3ColumnHandle.class::cast)
                                                       .collect(toList());
         TupleDomain<S3ColumnHandle> effectivePredicate = s3Layout.getConstraints()
-                                                                 .transform(S3ColumnHandle.class::cast);
+                                                                 .transformKeys(S3ColumnHandle.class::cast);
 
         Optional<ConnectorPageSource> pageSource = createS3PageSource(
                 pageSourceFactories,

@@ -18,7 +18,6 @@ package com.facebook.presto.s3;
 
 import io.trino.spi.TrinoException;
 import io.trino.spi.connector.ConnectorSession;
-import io.airlift.units.DataSize;
 import io.trino.spi.session.PropertyMetadata;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +30,19 @@ import java.io.UncheckedIOException;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.facebook.presto.s3.S3Const.*;
+import static com.facebook.presto.s3.S3Const.CSV;
+import static com.facebook.presto.s3.S3Const.PARQUET_BATCH_READER_VERIFICATION_ENABLED;
+import static com.facebook.presto.s3.S3Const.PARQUET_BATCH_READ_OPTIMIZATION_ENABLED;
+import static com.facebook.presto.s3.S3Const.PARQUET_FAIL_WITH_CORRUPTED_STATISTICS;
+import static com.facebook.presto.s3.S3Const.PARQUET_MAX_READ_BLOCK_SIZE;
+import static com.facebook.presto.s3.S3Const.PARQUET_USE_COLUMN_NAME;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_NEW_RECORD_CURSOR;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_READER_BUFFER_SIZE_BYTES;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_S3_SELECT_PUSHDOWN;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_SPLIT_BATCH;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_SPLIT_PAUSE_MS;
+import static com.facebook.presto.s3.S3Const.SESSION_PROP_SPLIT_RANGE_MB;
+import static com.facebook.presto.s3.S3Const.TEXT;
 import static io.airlift.units.DataSize.Unit.MEGABYTE;
 
 public class S3Util {

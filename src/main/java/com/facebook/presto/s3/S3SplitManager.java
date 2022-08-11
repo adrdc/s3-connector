@@ -19,9 +19,10 @@ package com.facebook.presto.s3;
 import io.airlift.log.Logger;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.connector.ConnectorSplitSource;
-import io.trino.spi.connector.ConnectorTableLayoutHandle;
 import io.trino.spi.connector.ConnectorSplitManager;
+import io.trino.spi.connector.ConnectorTableHandle;
 import io.trino.spi.connector.ConnectorTransactionHandle;
+import io.trino.spi.connector.DynamicFilter;
 
 import java.util.Iterator;
 
@@ -51,7 +52,11 @@ public class S3SplitManager
     }
 
     @Override
-    public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorTableLayoutHandle layout, SplitSchedulingStrategy splitSchedulingStrategy) {
+    public ConnectorSplitSource getSplits(ConnectorTransactionHandle transactionHandle,
+                                          ConnectorSession session,
+                                          ConnectorTableHandle table,
+                                          SplitSchedulingStrategy splitSchedulingStrategy,
+                                          DynamicFilter dynamicFilter) {
 
         S3TableLayoutHandle layoutHandle = checkType(layout, S3TableLayoutHandle.class, "layout");
 

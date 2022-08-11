@@ -17,15 +17,15 @@
 package com.facebook.presto.s3;
 
 import io.trino.spi.connector.ColumnHandle;
-import io.trino.spi.connector.ConnectorTableLayoutHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.trino.spi.connector.ConnectorTableLayout;
 import io.trino.spi.predicate.TupleDomain;
 
 import java.util.Objects;
 
 public class S3TableLayoutHandle
-        implements ConnectorTableLayoutHandle {
+        extends ConnectorTableLayout {
     private final S3TableHandle table;
 
     private final TupleDomain<ColumnHandle> constraints;
@@ -33,6 +33,7 @@ public class S3TableLayoutHandle
     @JsonCreator
     public S3TableLayoutHandle(@JsonProperty("table") S3TableHandle table,
                                @JsonProperty("constraints") TupleDomain<ColumnHandle> constraints) {
+
         this.table = table;
         this.constraints = constraints;
     }

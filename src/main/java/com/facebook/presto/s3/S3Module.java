@@ -16,13 +16,10 @@
 
 package com.facebook.presto.s3;
 
-import com.facebook.airlift.configuration.AbstractConfigurationAwareModule;
-import com.facebook.presto.common.type.Type;
-import com.facebook.presto.common.type.TypeManager;
+import com.facebook.presto.s3.parquet.ParquetMetadataSource;
 import io.airlift.configuration.AbstractConfigurationAwareModule;
 import io.trino.decoder.DispatchingRowDecoderFactory;
 import io.trino.decoder.RowDecoderFactory;
-import io.trino.decoder.avro.AvroRowDecoder;
 import io.trino.decoder.avro.AvroRowDecoderFactory;
 import io.trino.decoder.csv.CsvRowDecoder;
 import io.trino.decoder.csv.CsvRowDecoderFactory;
@@ -39,7 +36,6 @@ import com.google.inject.Binder;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import io.trino.parquet.reader.MetadataReader;
 import io.trino.spi.type.Type;
 import io.trino.spi.type.TypeManager;
 import org.weakref.jmx.MBeanExporter;
@@ -82,7 +78,6 @@ public class S3Module
         Multibinder<S3BatchPageSourceFactory> pageSourceFactoryBinder = newSetBinder(binder, S3BatchPageSourceFactory.class);
         pageSourceFactoryBinder.addBinding().to(ParquetPageSourceFactory.class).in(SINGLETON);
         configBinder(binder).bindConfig(S3ConnectorConfig.class);
-        configBinder(binder).bindConfig(ParquetCacheConfig.class, connectorId);
 
         jsonBinder(binder).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
         jsonCodecBinder(binder).bindJsonCodec(S3Table.class);
@@ -104,8 +99,7 @@ public class S3Module
     @Singleton
     @Provides
     public ParquetMetadataSource createParquetMetadataSource() {
-        ParquetMetadataSource parquetMetadataSource = new MetadataReader();
-        return parquetMetadataSource;
+        return new ParquetMetadataSource();
     }
 
     public static final class TypeDeserializer

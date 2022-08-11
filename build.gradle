@@ -76,6 +76,8 @@ dependencies {
     compile "com.amazonaws:aws-java-sdk-s3:${awsSDKVersion}"
     compile "com.amazonaws:aws-java-sdk-core:${awsSDKVersion}"
 
+    compile "com.emc.ecs:object-client:${emcObjectClientVersion}"
+
     compile 'javax.inject:javax.inject:1'
     compile 'javax.validation:validation-api:2.0.1.Final'
     compile 'org.apache.avro:avro:1.9.2'
@@ -117,7 +119,7 @@ dependencies {
 }
 
 group = 'io.trino'
-version = '359'
+version = '385'
 sourceCompatibility = '11'
 targetCompatibility = '11'
 
